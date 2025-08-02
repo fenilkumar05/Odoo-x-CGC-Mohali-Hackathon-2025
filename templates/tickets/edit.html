@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Ticket #{{ ticket.id }} - QuickDesk{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-header {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .section-title {
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .preview-section {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .tag-input {
+        position: relative;
+    }
+    
+    .tag-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+    }
+    
+    .tag-suggestion {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .tag-suggestion:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="animate__animated animate__fadeInUp">
+    <!-- Header -->
+    <div class="edit-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2><i class="fas fa-edit me-2"></i>Edit Ticket #{{ ticket.id }}</h2>
+                <p class="mb-0">Modify ticket details and settings</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="badge bg-warning fs-6">Admin Only</div>
+            </div>
+        </div>
+    </div>
+    
+    <form method="POST" id="editTicketForm">
+        {{ form.hidden_tag() }}
+        
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h5 class="section-title">
+                        <i class="fas fa-info-circle me-2"></i>Basic Information
+                    </h5>
+                    
+                    <div class="mb-3">
+                        {{ form.subject.label(class="form-label") }}
+                        {{ form.subject(class="form-control form-control-lg") }}
+                        {% if form.subject.errors %}
+                            <div class="text-danger">
+                                {% for error in form.subject.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows="8") }}
+                        {% if form.description.errors %}
+                            <div class="text-danger">
+                                {% for error in form.description.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Provide detailed information about the issue or request</div>
+                    </div>
+                </div>
+                
+                <!-- Classification -->
+                <div class="form-section">
+                    <h5 class="section-title">
+                        <i class="fas fa-tags me-2"></i>Classification
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.category.label(class="form-label") }}
+                                {{ form.category(class="form-select") }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.category.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.priority.label(class="form-label") }}
+                                {{ form.priority(class="form-select") }}
+                                {% if form.priority.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.priority.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.tags.label(class="form-label") }}
+                        <div class="tag-input">
+                            {{ form.tags(class="form-control", placeholder="Enter tags separated by commas (e.g., urgent, bug, network)") }}
+                            <div class="tag-suggestions" id="tagSuggestions"></div>
+                        </div>
+                        {% if form.tags.errors %}
+                            <div class="text-danger">
+                                {% for error in form.tags.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Available tags: 
+                            <span class="text-primary">urgent</span>, 
+                            <span class="text-primary">bug</span>, 
+                            <span class="text-primary">feature-request</span>, 
+                            <span class="text-primary">question</span>, 
+                            <span class="text-primary">billing</span>, 
+                            <span class="text-primary">hardware</span>, 
+                            <span class="text-primary">software</span>, 
+                            <span class="text-primary">network</span>, 
+                            <span class="text-primary">security</span>, 
+                            <span class="text-primary">training</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="form-section">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('tickets.view_ticket', id=ticket.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Cancel
+                        </a>
+                        <div>
+                            <button type="button" class="btn btn-outline-primary me-2" onclick="previewChanges()">
+                                <i class="fas fa-eye me-2"></i>Preview Changes
+                            </button>
+                            {{ form.submit(class="btn btn-warning") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- Current Ticket Info -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-info me-2"></i>Current Ticket Info</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <strong>ID:</strong> #{{ ticket.id }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Created:</strong> {{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Creator:</strong> {{ get_user_display_name(ticket.creator) }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Status:</strong>
+                            <span class="badge 
+                                {% if ticket.status == 'open' %}bg-primary
+                                {% elif ticket.status == 'in_progress' %}bg-warning
+                                {% elif ticket.status == 'resolved' %}bg-success
+                                {% else %}bg-secondary{% endif %}">
+                                {{ ticket.status.replace('_', ' ').title() }}
+                            </span>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Assigned to:</strong>
+                            {% if ticket.assignee %}
+                                {{ get_user_display_name(ticket.assignee) }}
+                            {% else %}
+                                <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Comments:</strong> {{ ticket.comments|length }}
+                        </div>
+                        <div class="mb-2">
+                            <strong>Last Updated:</strong> {{ ticket.updated_at.strftime('%Y-%m-%d %H:%M') if ticket.updated_at else 'Never' }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Change History -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6><i class="fas fa-history me-2"></i>Recent Changes</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if ticket.activities %}
+                            {% for activity in ticket.activities[-5:] %}
+                            <div class="d-flex mb-2">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-circle text-primary" style="font-size: 0.5rem; margin-top: 0.5rem;"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-2">
+                                    <div class="small">{{ activity.description }}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">
+                                        {{ time_ago(activity.created_at) }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-muted text-center">
+                                <i class="fas fa-history fa-2x mb-2"></i>
+                                <div>No recent changes</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Preview Modal -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Preview Changes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="previewContent">
+                    <!-- Preview content will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-warning" onclick="submitForm()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Tag suggestions
+const availableTags = ['urgent', 'bug', 'feature-request', 'question', 'billing', 'hardware', 'software', 'network', 'security', 'training'];
+
+document.getElementById('tags').addEventListener('input', function() {
+    const input = this.value;
+    const suggestions = document.getElementById('tagSuggestions');
+    
+    if (input.length > 0) {
+        const lastTag = input.split(',').pop().trim().toLowerCase();
+        const matches = availableTags.filter(tag => tag.includes(lastTag) && lastTag !== tag);
+        
+        if (matches.length > 0) {
+            suggestions.innerHTML = matches.map(tag => 
+                `<div class="tag-suggestion" onclick="addTag('${tag}')">${tag}</div>`
+            ).join('');
+            suggestions.style.display = 'block';
+        } else {
+            suggestions.style.display = 'none';
+        }
+    } else {
+        suggestions.style.display = 'none';
+    }
+});
+
+function addTag(tag) {
+    const input = document.getElementById('tags');
+    const currentTags = input.value.split(',').map(t => t.trim()).filter(t => t);
+    const lastTag = currentTags.pop() || '';
+    
+    if (!currentTags.includes(tag)) {
+        currentTags.push(tag);
+        input.value = currentTags.join(', ') + (currentTags.length > 0 ? ', ' : '');
+    }
+    
+    document.getElementById('tagSuggestions').style.display = 'none';
+    input.focus();
+}
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.tag-input')) {
+        document.getElementById('tagSuggestions').style.display = 'none';
+    }
+});
+
+// Preview changes
+function previewChanges() {
+    const form = document.getElementById('editTicketForm');
+    const formData = new FormData(form);
+    
+    const previewContent = `
+        <div class="preview-section">
+            <h6>Subject</h6>
+            <p>${formData.get('subject')}</p>
+        </div>
+        <div class="preview-section">
+            <h6>Description</h6>
+            <p style="white-space: pre-wrap;">${formData.get('description')}</p>
+        </div>
+        <div class="preview-section">
+            <h6>Category & Priority</h6>
+            <p><strong>Category:</strong> ${form.category.options[form.category.selectedIndex].text}</p>
+            <p><strong>Priority:</strong> ${formData.get('priority')}</p>
+        </div>
+        <div class="preview-section">
+            <h6>Tags</h6>
+            <p>${formData.get('tags') || 'No tags'}</p>
+        </div>
+    `;
+    
+    document.getElementById('previewContent').innerHTML = previewContent;
+    new bootstrap.Modal(document.getElementById('previewModal')).show();
+}
+
+function submitForm() {
+    document.getElementById('editTicketForm').submit();
+}
+
+// Form submission
+document.getElementById('editTicketForm').addEventListener('submit', function(e) {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const hideLoading = showLoading(submitBtn);
+    
+    // Re-enable button after 5 seconds if form doesn't submit
+    setTimeout(hideLoading, 5000);
+});
+</script>
+{% endblock %}

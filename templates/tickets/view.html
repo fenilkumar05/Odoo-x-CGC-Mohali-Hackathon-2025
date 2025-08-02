@@ -61,15 +61,61 @@
                 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <strong>Created by:</strong> {{ ticket.creator.username }}
+                        <strong>Created by:</strong>
+                        <div class="d-flex align-items-center mt-1">
+                            {% if ticket.creator.avatar_url %}
+                                <img src="{{ ticket.creator.avatar_url }}" alt="Avatar" class="rounded-circle me-2" width="24" height="24">
+                            {% else %}
+                                <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px; font-size: 0.7rem;">
+                                    {{ ticket.creator.first_name[0] if ticket.creator.first_name else ticket.creator.username[0] }}
+                                </div>
+                            {% endif %}
+                            {{ get_user_display_name(ticket.creator) }}
+                            <span class="badge bg-info ms-2">{{ get_user_role_display(ticket.creator) }}</span>
+                        </div>
                     </div>
                     <div class="col-md-6">
-                        <strong>Assigned to:</strong> 
-                        {% if ticket.assignee %}
-                            {{ ticket.assignee.username }}
-                        {% else %}
-                            <span class="text-muted">Unassigned</span>
-                        {% endif %}
+                        <strong>Assigned to:</strong>
+                        <div class="d-flex align-items-center mt-1" id="assignment-section">
+                            {% if ticket.assignee %}
+                                <div class="d-flex align-items-center">
+                                    {% if ticket.assignee.avatar_url %}
+                                        <img src="{{ ticket.assignee.avatar_url }}" alt="Avatar" class="rounded-circle me-2" width="24" height="24">
+                                    {% else %}
+                                        <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px; font-size: 0.7rem;">
+                                            {{ ticket.assignee.first_name[0] if ticket.assignee.first_name else ticket.assignee.username[0] }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <div>{{ get_user_display_name(ticket.assignee) }}</div>
+                                        {% if ticket.assignee.phone %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-phone me-1"></i>{{ ticket.assignee.phone }}
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                    {% if current_user.is_admin() %}
+                                    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="changeAssignment()">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-muted">Unassigned</span>
+                                    {% if current_user.is_agent() %}
+                                        <button class="btn btn-sm btn-success" onclick="selfAssignTicket()">
+                                            <i class="fas fa-hand-paper me-1"></i>Accept
+                                        </button>
+                                    {% endif %}
+                                    {% if current_user.is_admin() %}
+                                        <button class="btn btn-sm btn-primary" onclick="showAssignmentModal()">
+                                            <i class="fas fa-user-plus me-1"></i>Assign
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 
@@ -101,38 +147,107 @@
         <!-- Comments Timeline -->
         <div class="card">
             <div class="card-header">
-                <h5><i class="fas fa-comments me-2"></i>Comments & Updates</h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comments me-2"></i>Comments & Updates
+                        <span class="badge bg-secondary ms-2">{{ comments|length }}</span>
+                    </h5>
+                    <div class="d-flex gap-2">
+                        {% if current_user.is_agent() and not ticket.assigned_to %}
+                        <button class="btn btn-sm btn-success" onclick="selfAssignTicket()">
+                            <i class="fas fa-hand-paper me-1"></i>Accept This Ticket
+                        </button>
+                        {% endif %}
+                        <button class="btn btn-sm btn-outline-primary" onclick="scrollToCommentForm()">
+                            <i class="fas fa-plus me-1"></i>Add Comment
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 {% if comments %}
                 <div class="timeline">
                     {% for comment in comments %}
-                    <div class="timeline-item mb-4">
+                    <div class="timeline-item mb-4" id="comment-{{ comment.id }}">
                         <div class="d-flex">
                             <div class="flex-shrink-0">
-                                <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
-                                     style="width: 40px; height: 40px;">
-                                    {{ comment.author.username[0].upper() }}
-                                </div>
+                                {% if comment.author.avatar_url %}
+                                    <img src="{{ comment.author.avatar_url }}" alt="Avatar" class="rounded-circle" width="40" height="40">
+                                {% else %}
+                                    <div class="avatar
+                                        {% if comment.author.role == 'admin' %}bg-danger
+                                        {% elif comment.author.role == 'agent' %}bg-warning
+                                        {% else %}bg-primary{% endif %}
+                                        text-white rounded-circle d-flex align-items-center justify-content-center"
+                                         style="width: 40px; height: 40px;">
+                                        {{ comment.author.first_name[0] if comment.author.first_name else comment.author.username[0] }}
+                                    </div>
+                                {% endif %}
                             </div>
                             <div class="flex-grow-1 ms-3">
                                 <div class="card">
                                     <div class="card-header py-2">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <strong>{{ comment.author.username }}</strong>
-                                            {% if comment.author.is_agent() %}
-                                                <span class="badge bg-info">Agent</span>
-                                            {% endif %}
-                                            {% if comment.is_internal %}
-                                                <span class="badge bg-warning">Internal</span>
-                                            {% endif %}
-                                            <small class="text-muted">
-                                                {{ comment.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
-                                            </small>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <strong>{{ get_user_display_name(comment.author) }}</strong>
+                                                <span class="badge
+                                                    {% if comment.author.role == 'admin' %}bg-danger
+                                                    {% elif comment.author.role == 'agent' %}bg-warning
+                                                    {% else %}bg-info{% endif %} badge-sm">
+                                                    {{ get_user_role_display(comment.author) }}
+                                                </span>
+                                                {% if comment.is_internal %}
+                                                    <span class="badge bg-secondary badge-sm">Internal Note</span>
+                                                {% endif %}
+                                                {% if comment.author.role in ['admin', 'agent'] %}
+                                                    <i class="fas fa-shield-alt text-primary" title="Official Response"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <small class="text-muted" title="{{ format_full_datetime(comment.created_at) }}">
+                                                    {{ time_ago(comment.created_at) }}
+                                                </small>
+                                                <small class="text-muted">#{{ loop.index }}</small>
+                                                {% if current_user == comment.author or current_user.is_admin() %}
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li><a class="dropdown-item" href="#" onclick="editComment({{ comment.id }})">
+                                                            <i class="fas fa-edit me-2"></i>Edit
+                                                        </a></li>
+                                                        {% if current_user.is_admin() %}
+                                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteComment({{ comment.id }})">
+                                                            <i class="fas fa-trash me-2"></i>Delete
+                                                        </a></li>
+                                                        {% endif %}
+                                                    </ul>
+                                                </div>
+                                                {% endif %}
+                                            </div>
                                         </div>
+                                        {% if comment.created_at != comment.updated_at %}
+                                        <div class="text-warning small mt-1">
+                                            <i class="fas fa-edit me-1"></i>Edited {{ time_ago(comment.updated_at) }}
+                                        </div>
+                                        {% endif %}
                                     </div>
                                     <div class="card-body py-2">
-                                        {{ comment.content|nl2br_safe }}
+                                        <div id="comment-content-{{ comment.id }}">
+                                            {{ comment.content|nl2br_safe }}
+                                        </div>
+                                        <div id="comment-edit-{{ comment.id }}" style="display: none;">
+                                            <textarea class="form-control mb-2" rows="3">{{ comment.content }}</textarea>
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-sm btn-primary" onclick="saveComment({{ comment.id }})">
+                                                    <i class="fas fa-save me-1"></i>Save
+                                                </button>
+                                                <button class="btn btn-sm btn-secondary" onclick="cancelEdit({{ comment.id }})">
+                                                    <i class="fas fa-times me-1"></i>Cancel
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -189,25 +304,91 @@
                 <h6><i class="fas fa-tools me-2"></i>Agent Actions</h6>
             </div>
             <div class="card-body">
+                <!-- Assignment Status -->
+                <div class="mb-3">
+                    <label class="form-label">Assigned Agent</label>
+                    <div class="assignment-display p-2 border rounded" id="assignmentDisplay">
+                        {% if ticket.assigned_to %}
+                            {% if ticket.assigned_to == current_user.id %}
+                                <div class="d-flex align-items-center text-success">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <div>
+                                        <strong>You are assigned to this ticket</strong><br>
+                                        <small class="text-muted">{{ get_user_display_name(current_user) }}</small>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user me-2"></i>
+                                    <div>
+                                        <strong>{{ get_user_display_name(ticket.assignee) }}</strong><br>
+                                        <small class="text-muted">{{ ticket.assignee.email }}</small>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center">
+                                <i class="fas fa-user-slash text-muted mb-2"></i>
+                                <div class="text-muted">No agent assigned</div>
+                                <button class="btn btn-success btn-sm mt-2" onclick="selfAssignTicket()">
+                                    <i class="fas fa-hand-paper me-1"></i>Accept This Ticket
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
                 <!-- Status Update -->
                 <div class="mb-3">
                     <label class="form-label">Update Status</label>
-                    <select class="form-select" id="statusSelect" onchange="updateStatus({{ ticket.id }})">
-                        <option value="open" {% if ticket.status == 'open' %}selected{% endif %}>Open</option>
-                        <option value="in_progress" {% if ticket.status == 'in_progress' %}selected{% endif %}>In Progress</option>
-                        <option value="resolved" {% if ticket.status == 'resolved' %}selected{% endif %}>Resolved</option>
-                        <option value="closed" {% if ticket.status == 'closed' %}selected{% endif %}>Closed</option>
-                    </select>
+                    {% if ticket.assigned_to == current_user.id or current_user.is_admin() %}
+                        <select class="form-select" id="statusSelect">
+                            <option value="open" {% if ticket.status == 'open' %}selected{% endif %}>Open</option>
+                            <option value="in_progress" {% if ticket.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="resolved" {% if ticket.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                            <option value="closed" {% if ticket.status == 'closed' %}selected{% endif %}>Closed</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm mt-2" onclick="updateStatus({{ ticket.id }})">
+                            <i class="fas fa-save me-1"></i>Update Status
+                        </button>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            You must be assigned to this ticket to update its status.
+                        </div>
+                    {% endif %}
                 </div>
-                
-                <!-- Assign Agent -->
+
+                {% if current_user.is_admin() %}
+                <!-- Admin Assignment Controls -->
                 <div class="mb-3">
-                    <label class="form-label">Assign Agent</label>
-                    <select class="form-select" id="agentSelect" onchange="assignAgent({{ ticket.id }})">
+                    <label class="form-label">Admin: Assign to Agent</label>
+                    <select class="form-select" id="agentSelect">
                         <option value="">Unassigned</option>
-                        <!-- This would be populated with agents from the backend -->
+                        {% for agent in agents %}
+                        <option value="{{ agent.id }}" {% if ticket.assigned_to == agent.id %}selected{% endif %}>
+                            {{ get_user_display_name(agent) }}
+                        </option>
+                        {% endfor %}
                     </select>
+                    <button class="btn btn-success btn-sm mt-2" onclick="assignAgent({{ ticket.id }})">
+                        <i class="fas fa-user-check me-1"></i>Assign
+                    </button>
                 </div>
+
+                <!-- Admin Ticket Management -->
+                <div class="mb-3">
+                    <label class="form-label">Admin: Ticket Management</label>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('tickets.edit_ticket', id=ticket.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-edit me-1"></i>Edit Ticket
+                        </a>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteTicket({{ ticket.id }})">
+                            <i class="fas fa-trash me-1"></i>Delete Ticket
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
         {% endif %}
@@ -247,6 +428,7 @@
 
 {% block extra_js %}
 <script>
+// Voting functionality
 function voteTicket(ticketId, voteType) {
     fetch(`/tickets/${ticketId}/vote`, {
         method: 'POST',
@@ -264,8 +446,12 @@ function voteTicket(ticketId, voteType) {
     .catch(error => console.error('Error:', error));
 }
 
+// Status update functionality
 function updateStatus(ticketId) {
     const status = document.getElementById('statusSelect').value;
+    const btn = event.target.closest('button');
+    const hideLoading = showLoading(btn);
+
     fetch(`/tickets/${ticketId}/status`, {
         method: 'POST',
         headers: {
@@ -275,15 +461,58 @@ function updateStatus(ticketId) {
     })
     .then(response => response.json())
     .then(data => {
+        hideLoading();
         if (data.success) {
-            location.reload();
+            showToast(`Ticket status updated to ${status.replace('_', ' ')}`, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Failed to update status', 'error');
         }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        hideLoading();
+        console.error('Error:', error);
+        showToast('Failed to update status', 'error');
+    });
 }
 
+// Self-assignment functionality
+function selfAssignTicket() {
+    const ticketId = {{ ticket.id }};
+    const btn = event.target.closest('button');
+    const hideLoading = showLoading(btn);
+
+    fetch(`/tickets/${ticketId}/self-assign`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showToast(data.message, 'success');
+            // Update assignment display immediately
+            updateAssignmentDisplay(data.agent_name);
+            // Also reload page to update other elements
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.error || 'Failed to assign ticket', 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('Error:', error);
+        showToast('Failed to assign ticket', 'error');
+    });
+}
+
+// Assignment functionality for admins
 function assignAgent(ticketId) {
     const agentId = document.getElementById('agentSelect').value;
+    const hideLoading = showLoading(event.target.closest('button'));
+
     fetch(`/tickets/${ticketId}/assign`, {
         method: 'POST',
         headers: {
@@ -293,11 +522,148 @@ function assignAgent(ticketId) {
     })
     .then(response => response.json())
     .then(data => {
+        hideLoading();
         if (data.success) {
-            location.reload();
+            showToast(data.message || 'Assignment updated successfully', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Failed to assign ticket', 'error');
         }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        hideLoading();
+        console.error('Error:', error);
+        showToast('Failed to assign ticket', 'error');
+    });
 }
+
+// Comment management
+function editComment(commentId) {
+    document.getElementById(`comment-content-${commentId}`).style.display = 'none';
+    document.getElementById(`comment-edit-${commentId}`).style.display = 'block';
+}
+
+function cancelEdit(commentId) {
+    document.getElementById(`comment-content-${commentId}`).style.display = 'block';
+    document.getElementById(`comment-edit-${commentId}`).style.display = 'none';
+}
+
+function saveComment(commentId) {
+    const textarea = document.querySelector(`#comment-edit-${commentId} textarea`);
+    const newContent = textarea.value;
+
+    fetch(`/comments/${commentId}/edit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({content: newContent})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Comment updated successfully', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.error || 'Failed to update comment', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Failed to update comment', 'error');
+    });
+}
+
+function deleteComment(commentId) {
+    if (confirm('Are you sure you want to delete this comment?')) {
+        fetch(`/comments/${commentId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Comment deleted successfully', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.error || 'Failed to delete comment', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Failed to delete comment', 'error');
+        });
+    }
+}
+
+// Utility functions
+function scrollToCommentForm() {
+    document.getElementById('comment-form').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('content').focus();
+}
+
+// Admin ticket deletion
+function deleteTicket(ticketId) {
+    if (confirm('Are you sure you want to permanently delete this ticket? This action cannot be undone.')) {
+        const btn = event.target.closest('button');
+        const hideLoading = showLoading(btn);
+
+        fetch(`/tickets/${ticketId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 2000);
+            } else {
+                showToast(data.error || 'Failed to delete ticket', 'error');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error:', error);
+            showToast('Failed to delete ticket', 'error');
+        });
+    }
+}
+
+// Form submission enhancement
+document.addEventListener('DOMContentLoaded', function() {
+    const commentForm = document.getElementById('comment-form');
+    if (commentForm) {
+        commentForm.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const hideLoading = showLoading(submitBtn);
+
+            // Re-enable button after 3 seconds if form doesn't submit
+            setTimeout(hideLoading, 3000);
+        });
+    }
+
+    // Update assignment display after self-assignment
+    window.updateAssignmentDisplay = function(agentName) {
+        const assignmentDisplay = document.getElementById('assignmentDisplay');
+        if (assignmentDisplay) {
+            assignmentDisplay.innerHTML = `
+                <div class="d-flex align-items-center text-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <div>
+                        <strong>You are assigned to this ticket</strong><br>
+                        <small class="text-muted">${agentName}</small>
+                    </div>
+                </div>
+            `;
+        }
+    };
+});
 </script>
 {% endblock %}

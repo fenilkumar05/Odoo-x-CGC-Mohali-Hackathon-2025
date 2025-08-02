@@ -1,3 +1,5 @@
+# QuickDesk Enhanced Edition - Core Dependencies
+# Essential Flask components
 Flask==2.3.3
 Flask-SQLAlchemy==3.0.5
 Flask-Login==0.6.3
@@ -6,5 +8,19 @@ Flask-Mail==0.9.1
 WTForms==3.0.1
 Werkzeug==2.3.7
 email-validator==2.0.0
+
+# Essential utilities
 python-dotenv==1.0.0
 Pillow==10.0.1
+python-dateutil==2.8.2
+
+# Production deployment (uncomment for production)
+# gunicorn==21.2.0
+# psycopg2-binary==2.9.9  # For PostgreSQL
+# PyMySQL==1.1.0          # For MySQL
+
+# Optional enhancements (uncomment as needed)
+# Flask-Migrate==4.0.5    # Database migrations
+# Flask-Caching==2.1.0    # Caching support
+# Redis==5.0.1            # Redis caching
+# Celery==5.3.4           # Background tasks

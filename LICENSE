@@ -1,0 +1,53 @@
+MIT License
+
+Copyright (c) 2024 QuickDesk Enhanced Edition
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+
+QuickDesk Enhanced Edition - Professional Help Desk Management System
+
+This software is designed to provide organizations with a comprehensive,
+enterprise-grade help desk solution. It includes advanced features for
+ticket management, user administration, and automated workflows.
+
+Key Features:
+- Role-based user management (Admin, Agent, End User)
+- Advanced ticket management with self-assignment capabilities
+- Email notifications and activity tracking
+- Professional responsive interface
+- Complete administrative controls
+- Production-ready security and error handling
+
+For support, documentation, and updates, please visit:
+
+https://github.com/fenilkumar05/Odoo-x-CGC-Mohali-Hackathon-2025
+
+Third-Party Libraries:
+This software uses several open-source libraries, each with their own licenses:
+- Flask (BSD License)
+- SQLAlchemy (MIT License)
+- Bootstrap (MIT License)
+- Font Awesome (Font Awesome Free License)
+- And others as listed in requirements.txt
+
+Please ensure compliance with all third-party licenses when using this software.
+
+================================================================================

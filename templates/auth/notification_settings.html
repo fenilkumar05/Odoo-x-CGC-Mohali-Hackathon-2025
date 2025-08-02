@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+
+{% block title %}Notification Settings - QuickDesk{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notification-card {
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: var(--transition);
+    }
+    
+    .notification-card:hover {
+        border-color: var(--primary-color);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .notification-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+    }
+    
+    .notification-icon.email { background: rgba(99, 102, 241, 0.1); color: var(--primary-color); }
+    .notification-icon.push { background: rgba(16, 185, 129, 0.1); color: var(--accent-color); }
+    .notification-icon.sms { background: rgba(245, 158, 11, 0.1); color: var(--warning-color); }
+    
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+    
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+    
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+        background-color: var(--primary-color);
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+    
+    .frequency-selector {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .frequency-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border-color);
+        background: transparent;
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+        cursor: pointer;
+    }
+    
+    .frequency-btn.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate__animated animate__fadeInUp">
+    <div class="col-lg-8">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-bell me-2"></i>Notification Settings</h2>
+                <p class="text-muted mb-0">Customize how and when you receive notifications</p>
+            </div>
+            <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Profile
+            </a>
+        </div>
+        
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <!-- Email Notifications -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-envelope me-2"></i>Email Notifications</h5>
+                </div>
+                <div class="card-body">
+                    <div class="notification-card">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="notification-icon email">
+                                    <i class="fas fa-ticket-alt"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">New Ticket Created</h6>
+                                    <p class="text-muted mb-0">Get notified when a new ticket is created</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                {{ form.email_on_ticket_created(class="") }}
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="notification-card">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="notification-icon email">
+                                    <i class="fas fa-edit"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Ticket Updated</h6>
+                                    <p class="text-muted mb-0">Get notified when ticket details are updated</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                {{ form.email_on_ticket_updated(class="") }}
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="notification-card">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="notification-icon email">
+                                    <i class="fas fa-comment"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">New Comment Added</h6>
+                                    <p class="text-muted mb-0">Get notified when someone comments on your tickets</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                {{ form.email_on_comment_added(class="") }}
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="notification-card">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="notification-icon email">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Status Changed</h6>
+                                    <p class="text-muted mb-0">Get notified when ticket status changes</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                {{ form.email_on_status_changed(class="") }}
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    {% if current_user.is_agent() %}
+                    <div class="notification-card">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="notification-icon email">
+                                    <i class="fas fa-user-check"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Ticket Assigned</h6>
+                                    <p class="text-muted mb-0">Get notified when a ticket is assigned to you</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                {{ form.email_on_assignment(class="") }}
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Notification Frequency -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock me-2"></i>Notification Frequency</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Email Digest</h6>
+                            <p class="text-muted">Receive a summary of notifications</p>
+                            <div class="frequency-selector">
+                                <button type="button" class="frequency-btn active" data-frequency="immediate">Immediate</button>
+                                <button type="button" class="frequency-btn" data-frequency="daily">Daily</button>
+                                <button type="button" class="frequency-btn" data-frequency="weekly">Weekly</button>
+                                <button type="button" class="frequency-btn" data-frequency="never">Never</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Quiet Hours</h6>
+                            <p class="text-muted">Don't send notifications during these hours</p>
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="form-label">From</label>
+                                    <input type="time" class="form-control" value="22:00">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">To</label>
+                                    <input type="time" class="form-control" value="08:00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Push Notifications (Future Feature) -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-mobile-alt me-2"></i>Push Notifications</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Coming Soon!</strong> Push notifications will be available in a future update. 
+                        You'll be able to receive instant notifications on your mobile device.
+                    </div>
+                    
+                    <div class="notification-card opacity-50">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="notification-icon push">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Browser Notifications</h6>
+                                    <p class="text-muted mb-0">Receive notifications in your browser</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" disabled>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="notification-card opacity-50">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="notification-icon push">
+                                    <i class="fas fa-mobile-alt"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Mobile App Notifications</h6>
+                                    <p class="text-muted mb-0">Receive notifications on your mobile device</p>
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" disabled>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Notifications -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-vial me-2"></i>Test Notifications</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Send a test notification to verify your settings are working correctly.</p>
+                    <button type="button" class="btn btn-outline-primary" onclick="sendTestNotification()">
+                        <i class="fas fa-paper-plane me-2"></i>Send Test Email
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Save Settings -->
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Cancel
+                </a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Frequency selector
+    document.querySelectorAll('.frequency-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remove active class from all buttons in this group
+            this.parentElement.querySelectorAll('.frequency-btn').forEach(b => b.classList.remove('active'));
+            // Add active class to clicked button
+            this.classList.add('active');
+        });
+    });
+    
+    // Test notification
+    function sendTestNotification() {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = '<span class="loading-spinner me-2"></span>Sending...';
+        btn.disabled = true;
+        
+        // Simulate sending test notification
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            showToast('Test notification sent! Check your email.', 'success');
+        }, 2000);
+    }
+    
+    // Form submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const hideLoading = showLoading(submitBtn);
+        
+        // Re-enable button after 3 seconds if form doesn't submit
+        setTimeout(hideLoading, 3000);
+    });
+    
+    // Auto-save settings
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // Auto-save functionality would go here
+            showToast('Settings auto-saved', 'success');
+        });
+    });
+</script>
+{% endblock %}

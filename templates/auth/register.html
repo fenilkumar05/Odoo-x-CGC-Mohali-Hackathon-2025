@@ -2,77 +2,360 @@
 
 {% block title %}Register - QuickDesk{% endblock %}
 
+{% block extra_css %}
+<style>
+    .role-card {
+        border: 2px solid transparent;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .role-card:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+
+    .role-card.selected {
+        border-color: var(--primary-color);
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .step-indicator {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+
+    .step {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 0.5rem;
+        transition: var(--transition);
+    }
+
+    .step.active {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .step.completed {
+        background: var(--accent-color);
+        color: white;
+    }
+
+    .form-step {
+        display: none;
+    }
+
+    .form-step.active {
+        display: block;
+        animation: fadeIn 0.3s ease-in;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-4">
+<div class="row justify-content-center animate__animated animate__fadeInUp">
+    <div class="col-lg-8">
         <div class="card">
             <div class="card-header text-center">
-                <h4><i class="fas fa-user-plus me-2"></i>Register</h4>
+                <h3><i class="fas fa-user-plus me-2"></i>Create Your Account</h3>
+                <p class="text-muted mb-0">Join QuickDesk and streamline your support experience</p>
             </div>
             <div class="card-body">
-                <form method="POST">
+                <!-- Step Indicator -->
+                <div class="step-indicator">
+                    <div class="step active" id="step1">1</div>
+                    <div class="step" id="step2">2</div>
+                    <div class="step" id="step3">3</div>
+                </div>
+
+                <form method="POST" id="registrationForm">
                     {{ form.hidden_tag() }}
-                    
-                    <div class="mb-3">
-                        {{ form.username.label(class="form-label") }}
-                        {{ form.username(class="form-control") }}
-                        {% if form.username.errors %}
-                            <div class="text-danger">
-                                {% for error in form.username.errors %}
-                                    <small>{{ error }}</small>
-                                {% endfor %}
+
+                    <!-- Step 1: Role Selection -->
+                    <div class="form-step active" id="formStep1">
+                        <h5 class="mb-4 text-center">Choose Your Role</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="role-card card h-100 text-center p-3" data-role="user">
+                                    <div class="card-body">
+                                        <i class="fas fa-user fa-3x text-primary mb-3"></i>
+                                        <h6>End User</h6>
+                                        <p class="text-muted small">Submit and track support tickets</p>
+                                        <ul class="list-unstyled text-start small">
+                                            <li><i class="fas fa-check text-success me-2"></i>Create tickets</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Track progress</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Add comments</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Vote on tickets</li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.email.label(class="form-label") }}
-                        {{ form.email(class="form-control") }}
-                        {% if form.email.errors %}
-                            <div class="text-danger">
-                                {% for error in form.email.errors %}
-                                    <small>{{ error }}</small>
-                                {% endfor %}
+                            <div class="col-md-4 mb-3">
+                                <div class="role-card card h-100 text-center p-3" data-role="agent">
+                                    <div class="card-body">
+                                        <i class="fas fa-headset fa-3x text-warning mb-3"></i>
+                                        <h6>Support Agent</h6>
+                                        <p class="text-muted small">Manage and resolve support tickets</p>
+                                        <ul class="list-unstyled text-start small">
+                                            <li><i class="fas fa-check text-success me-2"></i>View all tickets</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Assign tickets</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Update status</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Analytics access</li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.password.label(class="form-label") }}
-                        {{ form.password(class="form-control") }}
-                        {% if form.password.errors %}
-                            <div class="text-danger">
-                                {% for error in form.password.errors %}
-                                    <small>{{ error }}</small>
-                                {% endfor %}
+                            <div class="col-md-4 mb-3">
+                                <div class="role-card card h-100 text-center p-3" data-role="admin">
+                                    <div class="card-body">
+                                        <i class="fas fa-crown fa-3x text-danger mb-3"></i>
+                                        <h6>Administrator</h6>
+                                        <p class="text-muted small">Full system access and management</p>
+                                        <ul class="list-unstyled text-start small">
+                                            <li><i class="fas fa-check text-success me-2"></i>User management</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>System settings</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Full analytics</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Category management</li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
-                        {% endif %}
+                        </div>
+                        {{ form.role(style="display: none;") }}
+                        <div class="text-center mt-4">
+                            <button type="button" class="btn btn-primary" onclick="nextStep()" id="step1Next" disabled>
+                                Continue <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        {{ form.password2.label(class="form-label") }}
-                        {{ form.password2(class="form-control") }}
-                        {% if form.password2.errors %}
-                            <div class="text-danger">
-                                {% for error in form.password2.errors %}
-                                    <small>{{ error }}</small>
-                                {% endfor %}
+
+                    <!-- Step 2: Personal Information -->
+                    <div class="form-step" id="formStep2">
+                        <h5 class="mb-4 text-center">Personal Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.first_name.label(class="form-label") }}
+                                    {{ form.first_name(class="form-control") }}
+                                    {% if form.first_name.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.first_name.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </div>
-                        {% endif %}
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.last_name.label(class="form-label") }}
+                                    {{ form.last_name(class="form-control") }}
+                                    {% if form.last_name.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.last_name.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.username.label(class="form-label") }}
+                                    {{ form.username(class="form-control") }}
+                                    {% if form.username.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.username.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.email.label(class="form-label") }}
+                                    {{ form.email(class="form-control") }}
+                                    {% if form.email.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.email.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.phone.label(class="form-label") }}
+                                    {{ form.phone(class="form-control") }}
+                                    {% if form.phone.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.phone.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.department.label(class="form-label") }}
+                                    {{ form.department(class="form-control") }}
+                                    {% if form.department.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.department.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary" onclick="prevStep()">
+                                <i class="fas fa-arrow-left me-2"></i>Back
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="nextStep()">
+                                Continue <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
                     </div>
-                    
-                    <div class="d-grid">
-                        {{ form.submit(class="btn btn-primary") }}
+
+                    <!-- Step 3: Security & Preferences -->
+                    <div class="form-step" id="formStep3">
+                        <h5 class="mb-4 text-center">Security & Preferences</h5>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.password.label(class="form-label") }}
+                                    {{ form.password(class="form-control") }}
+                                    {% if form.password.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.password.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Minimum 6 characters</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.password2.label(class="form-label") }}
+                                    {{ form.password2(class="form-control") }}
+                                    {% if form.password2.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.password2.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.email_notifications(class="form-check-input") }}
+                                {{ form.email_notifications.label(class="form-check-label") }}
+                                <div class="form-text">Get notified about ticket updates via email</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary" onclick="prevStep()">
+                                <i class="fas fa-arrow-left me-2"></i>Back
+                            </button>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
                     </div>
                 </form>
             </div>
             <div class="card-footer text-center">
                 <small class="text-muted">
-                    Already have an account? 
-                    <a href="{{ url_for('auth.login') }}">Login here</a>
+                    Already have an account?
+                    <a href="{{ url_for('auth.login') }}" class="text-decoration-none">Login here</a>
                 </small>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentStep = 1;
+    const totalSteps = 3;
+
+    // Role selection
+    document.querySelectorAll('.role-card').forEach(card => {
+        card.addEventListener('click', function() {
+            // Remove selected class from all cards
+            document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+
+            // Add selected class to clicked card
+            this.classList.add('selected');
+
+            // Update hidden role field
+            const role = this.dataset.role;
+            document.querySelector('#role').value = role;
+
+            // Enable next button
+            document.getElementById('step1Next').disabled = false;
+        });
+    });
+
+    function nextStep() {
+        if (currentStep < totalSteps) {
+            // Hide current step
+            document.getElementById(`formStep${currentStep}`).classList.remove('active');
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.getElementById(`step${currentStep}`).classList.add('completed');
+
+            // Show next step
+            currentStep++;
+            document.getElementById(`formStep${currentStep}`).classList.add('active');
+            document.getElementById(`step${currentStep}`).classList.add('active');
+        }
+    }
+
+    function prevStep() {
+        if (currentStep > 1) {
+            // Hide current step
+            document.getElementById(`formStep${currentStep}`).classList.remove('active');
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+
+            // Show previous step
+            currentStep--;
+            document.getElementById(`formStep${currentStep}`).classList.add('active');
+            document.getElementById(`step${currentStep}`).classList.remove('completed');
+            document.getElementById(`step${currentStep}`).classList.add('active');
+        }
+    }
+
+    // Form validation
+    document.getElementById('registrationForm').addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const hideLoading = showLoading(submitBtn);
+
+        // Re-enable button after 3 seconds if form doesn't submit
+        setTimeout(hideLoading, 3000);
+    });
+</script>
 {% endblock %}

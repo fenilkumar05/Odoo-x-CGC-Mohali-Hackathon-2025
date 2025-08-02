@@ -1,0 +1,172 @@
+# QuickDesk Enhanced Edition - Git Ignore File
+# Excludes sensitive information and unnecessary files from version control
+
+# =============================================================================
+# SENSITIVE CONFIGURATION FILES
+# =============================================================================
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+
+# =============================================================================
+# PYTHON VIRTUAL ENVIRONMENT
+# =============================================================================
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# =============================================================================
+# PYTHON CACHE AND COMPILED FILES
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# =============================================================================
+# DATABASE FILES
+# =============================================================================
+*.db
+*.sqlite
+*.sqlite3
+instance/quickdesk.db
+instance/*.db
+
+# =============================================================================
+# LOG FILES
+# =============================================================================
+*.log
+logs/
+instance/logs/
+app.log
+error.log
+access.log
+
+# =============================================================================
+# FILE UPLOADS (Keep directory structure, exclude content)
+# =============================================================================
+uploads/*
+!uploads/.gitkeep
+uploads/tickets/*
+!uploads/tickets/.gitkeep
+uploads/avatars/*
+!uploads/avatars/.gitkeep
+
+# =============================================================================
+# TEMPORARY FILES
+# =============================================================================
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# =============================================================================
+# IDE AND EDITOR FILES
+# =============================================================================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.atom/
+.brackets.json
+
+# =============================================================================
+# TESTING AND COVERAGE
+# =============================================================================
+.coverage
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# =============================================================================
+# DOCUMENTATION BUILD
+# =============================================================================
+docs/_build/
+.readthedocs.yml
+
+# =============================================================================
+# DEPLOYMENT AND PRODUCTION
+# =============================================================================
+.docker/
+docker-compose.override.yml
+.kubernetes/
+.helm/
+
+# =============================================================================
+# BACKUP FILES
+# =============================================================================
+*.bak
+*.backup
+*.old
+*_backup
+*_old
+
+# =============================================================================
+# SECURITY AND CERTIFICATES
+# =============================================================================
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# =============================================================================
+# PACKAGE MANAGER FILES (Keep requirements.txt)
+# =============================================================================
+Pipfile
+Pipfile.lock
+poetry.lock
+yarn.lock
+package-lock.json
+
+# =============================================================================
+# SYSTEM FILES
+# =============================================================================
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# CUSTOM EXCLUSIONS
+# =============================================================================
+# Add any project-specific files to exclude here
+test_data/
+sample_uploads/
+development_notes.md
+TODO.md

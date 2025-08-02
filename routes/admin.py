@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required, current_user
 from functools import wraps
-from models import User, Category, Ticket, db
+from models import User, Category, Ticket, Comment, Vote, Attachment, TicketActivity, NotificationSettings, Tag, db
 from forms import CategoryForm, UserForm
 from werkzeug.security import generate_password_hash
 
@@ -140,20 +140,58 @@ def edit_user(id):
 @login_required
 @admin_required
 def delete_user(id):
+    """Delete a user and all associated data"""
+    if id == current_user.id:
+        return jsonify({'error': 'You cannot delete your own account.'}), 400
+
     user = User.query.get_or_404(id)
-    
-    # Prevent deleting yourself
-    if user.id == current_user.id:
-        return jsonify({'error': 'Cannot delete yourself'}), 400
-    
-    # Check if user has tickets
-    if user.tickets:
-        return jsonify({'error': 'Cannot delete user with existing tickets'}), 400
-    
-    db.session.delete(user)
-    db.session.commit()
-    
-    return jsonify({'success': True})
+
+    try:
+        # Delete user's tickets and associated data
+        for ticket in user.tickets:
+            # Delete ticket comments
+            Comment.query.filter_by(ticket_id=ticket.id).delete()
+            # Delete ticket votes
+            Vote.query.filter_by(ticket_id=ticket.id).delete()
+            # Delete ticket attachments
+            Attachment.query.filter_by(ticket_id=ticket.id).delete()
+            # Delete ticket activities
+            TicketActivity.query.filter_by(ticket_id=ticket.id).delete()
+            # Clear tag associations
+            ticket.tags.clear()
+            # Delete the ticket
+            db.session.delete(ticket)
+
+        # Delete user's comments on other tickets
+        Comment.query.filter_by(user_id=user.id).delete()
+
+        # Delete user's votes
+        Vote.query.filter_by(user_id=user.id).delete()
+
+        # Delete user's activities
+        TicketActivity.query.filter_by(user_id=user.id).delete()
+
+        # Delete user's notification settings
+        NotificationSettings.query.filter_by(user_id=user.id).delete()
+
+        # Update tickets assigned to this user
+        Ticket.query.filter_by(assigned_to=user.id).update({'assigned_to': None})
+
+        # Delete the user
+        username = user.username
+        db.session.delete(user)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'User {username} and all associated data have been permanently deleted.'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'error': f'Failed to delete user: {str(e)}'
+        }), 500
 
 @admin_bp.route('/categories')
 @login_required
@@ -227,3 +265,86 @@ def delete_category(id):
     db.session.commit()
     
     return jsonify({'success': True})
+
+# Duplicate function removed - using the enhanced version above
+
+@admin_bp.route('/assign-ticket', methods=['POST'])
+@login_required
+@admin_required
+def assign_ticket_admin():
+    """Admin assignment of tickets to agents"""
+    ticket_id = request.json.get('ticket_id')
+    agent_id = request.json.get('agent_id')
+
+    if not ticket_id:
+        return jsonify({'error': 'Ticket ID is required'}), 400
+
+    ticket = Ticket.query.get_or_404(ticket_id)
+
+    if agent_id:
+        agent = User.query.get(agent_id)
+        if not agent or not agent.is_agent():
+            return jsonify({'error': 'Invalid agent selected'}), 400
+
+        old_assignee = ticket.assignee
+        ticket.assigned_to = agent_id
+
+        # Create activity log
+        activity = TicketActivity(
+            ticket_id=ticket.id,
+            user_id=current_user.id,
+            activity_type='assigned',
+            description=f'Ticket assigned to {agent.username} by admin {current_user.username}',
+            old_value=old_assignee.username if old_assignee else None,
+            new_value=agent.username
+        )
+        db.session.add(activity)
+        db.session.commit()
+
+        # Send notifications
+        try:
+            from utils import send_notification_email
+            # Notify the assigned agent
+            send_notification_email(
+                ticket=ticket,
+                event_type='assigned_to_you',
+                recipient_email=agent.email,
+                assigner_name=current_user.username
+            )
+
+            # Notify the ticket creator
+            send_notification_email(
+                ticket=ticket,
+                event_type='assigned',
+                recipient_email=ticket.creator.email,
+                agent_name=agent.username
+            )
+        except Exception as e:
+            print(f"Error sending assignment notification: {e}")
+
+        return jsonify({
+            'success': True,
+            'message': f'Ticket assigned to {agent.username}',
+            'agent_name': agent.username
+        })
+    else:
+        # Unassign ticket
+        old_assignee = ticket.assignee
+        ticket.assigned_to = None
+
+        # Create activity log
+        activity = TicketActivity(
+            ticket_id=ticket.id,
+            user_id=current_user.id,
+            activity_type='unassigned',
+            description=f'Ticket unassigned by admin {current_user.username}',
+            old_value=old_assignee.username if old_assignee else None,
+            new_value=None
+        )
+        db.session.add(activity)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Ticket unassigned'
+        })

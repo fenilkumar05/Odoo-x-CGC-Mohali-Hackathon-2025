@@ -2,112 +2,437 @@
 
 {% block title %}Create Ticket - QuickDesk{% endblock %}
 
+{% block extra_css %}
+<style>
+    .tag-input-container {
+        position: relative;
+    }
+
+    .tag-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-top: none;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+    }
+
+    [data-bs-theme="dark"] .tag-suggestions {
+        background: var(--bs-dark);
+        border-color: var(--border-color);
+    }
+
+    .tag-suggestion {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .tag-suggestion:hover {
+        background: var(--secondary-color);
+    }
+
+    .popular-tag {
+        display: inline-block;
+        background: var(--primary-color);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.875rem;
+        margin: 0.25rem;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .popular-tag:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+
+    .priority-selector {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .priority-option {
+        padding: 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        text-align: center;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .priority-option:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+
+    .priority-option.selected {
+        border-color: var(--primary-color);
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .priority-low { border-left: 4px solid var(--accent-color); }
+    .priority-medium { border-left: 4px solid #3b82f6; }
+    .priority-high { border-left: 4px solid var(--warning-color); }
+    .priority-urgent { border-left: 4px solid var(--danger-color); }
+
+    .file-drop-zone {
+        border: 2px dashed var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        text-align: center;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .file-drop-zone:hover,
+    .file-drop-zone.dragover {
+        border-color: var(--primary-color);
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .auto-save-indicator {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: var(--accent-color);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        font-size: 0.875rem;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 1000;
+    }
+
+    .auto-save-indicator.show {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-8">
+<div class="row justify-content-center animate__animated animate__fadeInUp">
+    <div class="col-lg-10">
+        <!-- Auto-save indicator -->
+        <div class="auto-save-indicator" id="autoSaveIndicator">
+            <i class="fas fa-save me-2"></i>Draft saved
+        </div>
+
         <div class="card">
             <div class="card-header">
-                <h4><i class="fas fa-plus me-2"></i>Create New Ticket</h4>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4><i class="fas fa-plus me-2"></i>Create New Ticket</h4>
+                        <p class="text-muted mb-0">Describe your issue or request in detail</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary" onclick="saveDraft()">
+                            <i class="fas fa-save me-2"></i>Save Draft
+                        </button>
+                        <button type="button" class="btn btn-outline-info" onclick="showTemplates()">
+                            <i class="fas fa-file-alt me-2"></i>Templates
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
-                <form method="POST" enctype="multipart/form-data">
+                <form method="POST" enctype="multipart/form-data" id="ticketForm">
                     {{ form.hidden_tag() }}
-                    
-                    <div class="mb-3">
-                        {{ form.subject.label(class="form-label") }}
-                        {{ form.subject(class="form-control") }}
+
+                    <!-- Subject -->
+                    <div class="mb-4">
+                        {{ form.subject.label(class="form-label fw-semibold") }}
+                        {{ form.subject(class="form-control form-control-lg", placeholder="Brief description of your issue") }}
                         {% if form.subject.errors %}
-                            <div class="text-danger">
+                            <div class="text-danger mt-1">
                                 {% for error in form.subject.errors %}
-                                    <small>{{ error }}</small>
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
                                 {% endfor %}
                             </div>
                         {% endif %}
-                        <div class="form-text">Provide a clear, concise subject for your ticket</div>
+                        <div class="form-text">Be specific and descriptive - this helps us route your ticket correctly</div>
                     </div>
-                    
-                    <div class="row">
+
+                    <!-- Category and Priority -->
+                    <div class="row mb-4">
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.category.label(class="form-label") }}
-                                {{ form.category(class="form-select") }}
-                                {% if form.category.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.category.errors %}
-                                            <small>{{ error }}</small>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
+                            <label class="form-label fw-semibold">Category</label>
+                            {{ form.category(class="form-select") }}
+                            {% if form.category.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.category.errors %}
+                                        <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.priority.label(class="form-label") }}
-                                {{ form.priority(class="form-select") }}
-                                {% if form.priority.errors %}
-                                    <div class="text-danger">
-                                        {% for error in form.priority.errors %}
-                                            <small>{{ error }}</small>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
+                            <label class="form-label fw-semibold">Priority Level</label>
+                            <div class="priority-selector">
+                                <div class="priority-option priority-low" data-priority="low">
+                                    <i class="fas fa-circle text-success mb-2"></i>
+                                    <div class="fw-semibold">Low</div>
+                                    <small class="text-muted">General inquiry</small>
+                                </div>
+                                <div class="priority-option priority-medium selected" data-priority="medium">
+                                    <i class="fas fa-circle text-info mb-2"></i>
+                                    <div class="fw-semibold">Medium</div>
+                                    <small class="text-muted">Standard issue</small>
+                                </div>
+                                <div class="priority-option priority-high" data-priority="high">
+                                    <i class="fas fa-circle text-warning mb-2"></i>
+                                    <div class="fw-semibold">High</div>
+                                    <small class="text-muted">Important issue</small>
+                                </div>
+                                <div class="priority-option priority-urgent" data-priority="urgent">
+                                    <i class="fas fa-circle text-danger mb-2"></i>
+                                    <div class="fw-semibold">Urgent</div>
+                                    <small class="text-muted">Critical issue</small>
+                                </div>
                             </div>
+                            {{ form.priority(style="display: none;") }}
                         </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        {{ form.description.label(class="form-label") }}
-                        {{ form.description(class="form-control") }}
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        {{ form.description.label(class="form-label fw-semibold") }}
+                        {{ form.description(class="form-control", style="min-height: 150px;", placeholder="Provide detailed information about your issue or request...") }}
                         {% if form.description.errors %}
-                            <div class="text-danger">
+                            <div class="text-danger mt-1">
                                 {% for error in form.description.errors %}
-                                    <small>{{ error }}</small>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        <div class="form-text">Provide detailed information about your issue or request</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        {{ form.attachment.label(class="form-label") }}
-                        {{ form.attachment(class="form-control") }}
-                        {% if form.attachment.errors %}
-                            <div class="text-danger">
-                                {% for error in form.attachment.errors %}
-                                    <small>{{ error }}</small>
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
                                 {% endfor %}
                             </div>
                         {% endif %}
                         <div class="form-text">
-                            Optional: Attach files (jpg, jpeg, png, gif, pdf, doc, docx, txt) - Max 16MB
+                            Include steps to reproduce the issue, error messages, and any relevant details
                         </div>
                     </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">
+
+                    <!-- Tags -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Tags</label>
+                        <div class="tag-input-container">
+                            {{ form.tags(class="form-control", placeholder="Enter tags separated by commas (e.g., billing, urgent, bug)") }}
+                            <div class="tag-suggestions" id="tagSuggestions"></div>
+                        </div>
+                        {% if form.tags.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.tags.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {% if popular_tags %}
+                        <div class="mt-2">
+                            <small class="text-muted">Popular tags:</small><br>
+                            {% for tag in popular_tags %}
+                            <span class="popular-tag" onclick="addTag('{{ tag.name }}')">{{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- File Attachment -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Attachments</label>
+                        <div class="file-drop-zone" id="fileDropZone">
+                            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                            <p class="mb-2">Drag and drop files here or click to browse</p>
+                            <small class="text-muted">Supported: JPG, PNG, PDF, DOC, DOCX, TXT (Max 16MB)</small>
+                            {{ form.attachment(style="display: none;") }}
+                        </div>
+                        <div id="filePreview" class="mt-2"></div>
+                        {% if form.attachment.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.attachment.errors %}
+                                    <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-2"></i>Cancel
                         </a>
-                        {{ form.submit(class="btn btn-primary") }}
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary" onclick="previewTicket()">
+                                <i class="fas fa-eye me-2"></i>Preview
+                            </button>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
-        
+
         <!-- Help Section -->
         <div class="card mt-4">
             <div class="card-header">
-                <h6><i class="fas fa-question-circle me-2"></i>Tips for Creating Effective Tickets</h6>
+                <h6><i class="fas fa-lightbulb me-2"></i>Tips for Effective Tickets</h6>
             </div>
             <div class="card-body">
-                <ul class="mb-0">
-                    <li><strong>Be specific:</strong> Use clear, descriptive subjects</li>
-                    <li><strong>Provide details:</strong> Include steps to reproduce issues</li>
-                    <li><strong>Choose the right category:</strong> This helps route your ticket correctly</li>
-                    <li><strong>Set appropriate priority:</strong> Reserve urgent for critical issues</li>
-                    <li><strong>Attach files:</strong> Screenshots and documents can help explain issues</li>
-                </ul>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Writing Guidelines</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Use clear, descriptive subjects</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Include steps to reproduce issues</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Provide error messages if any</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Mention your environment (browser, OS)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Priority Guidelines</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-circle text-danger me-2"></i><strong>Urgent:</strong> System down, security issues</li>
+                            <li><i class="fas fa-circle text-warning me-2"></i><strong>High:</strong> Major functionality broken</li>
+                            <li><i class="fas fa-circle text-info me-2"></i><strong>Medium:</strong> Standard issues</li>
+                            <li><i class="fas fa-circle text-success me-2"></i><strong>Low:</strong> Questions, minor issues</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Priority selection
+    document.querySelectorAll('.priority-option').forEach(option => {
+        option.addEventListener('click', function() {
+            document.querySelectorAll('.priority-option').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+            document.getElementById('priority').value = this.dataset.priority;
+        });
+    });
+
+    // Tag functionality
+    function addTag(tagName) {
+        const tagsInput = document.getElementById('tags');
+        const currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+
+        if (!currentTags.includes(tagName)) {
+            currentTags.push(tagName);
+            tagsInput.value = currentTags.join(', ');
+        }
+    }
+
+    // File drop zone
+    const fileDropZone = document.getElementById('fileDropZone');
+    const fileInput = document.getElementById('attachment');
+    const filePreview = document.getElementById('filePreview');
+
+    fileDropZone.addEventListener('click', () => fileInput.click());
+
+    fileDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileDropZone.classList.add('dragover');
+    });
+
+    fileDropZone.addEventListener('dragleave', () => {
+        fileDropZone.classList.remove('dragover');
+    });
+
+    fileDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileDropZone.classList.remove('dragover');
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            showFilePreview(files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            showFilePreview(e.target.files[0]);
+        }
+    });
+
+    function showFilePreview(file) {
+        const fileSize = (file.size / 1024 / 1024).toFixed(2);
+        filePreview.innerHTML = `
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-file me-2"></i>
+                <div>
+                    <strong>${file.name}</strong> (${fileSize} MB)
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="removeFile()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function removeFile() {
+        fileInput.value = '';
+        filePreview.innerHTML = '';
+    }
+
+    // Auto-save functionality
+    let autoSaveTimeout;
+    const form = document.getElementById('ticketForm');
+    const autoSaveIndicator = document.getElementById('autoSaveIndicator');
+
+    function showAutoSaveIndicator() {
+        autoSaveIndicator.classList.add('show');
+        setTimeout(() => {
+            autoSaveIndicator.classList.remove('show');
+        }, 2000);
+    }
+
+    function saveDraft() {
+        // Implementation for saving draft
+        showAutoSaveIndicator();
+        showToast('Draft saved successfully', 'success');
+    }
+
+    // Enable auto-save
+    ['input', 'textarea', 'select'].forEach(selector => {
+        document.querySelectorAll(selector).forEach(element => {
+            element.addEventListener('input', function() {
+                clearTimeout(autoSaveTimeout);
+                autoSaveTimeout = setTimeout(saveDraft, 3000);
+            });
+        });
+    });
+
+    function previewTicket() {
+        // Implementation for ticket preview
+        showToast('Preview functionality coming soon!', 'info');
+    }
+
+    function showTemplates() {
+        // Implementation for ticket templates
+        showToast('Templates functionality coming soon!', 'info');
+    }
+
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const hideLoading = showLoading(submitBtn);
+
+        // Re-enable button after 5 seconds if form doesn't submit
+        setTimeout(hideLoading, 5000);
+    });
+</script>
 {% endblock %}

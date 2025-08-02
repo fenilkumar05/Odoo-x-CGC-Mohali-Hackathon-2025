@@ -48,32 +48,111 @@ def activate_and_install_requirements():
     return run_command(pip_command, 'Installing Python packages')
 
 def setup_database():
-    """Initialize the database"""
+    """Initialize the database with enhanced features"""
     if os.name == 'nt':  # Windows
         python_command = 'venv\\Scripts\\python'
     else:  # Unix/Linux/macOS
         python_command = 'venv/bin/python'
-    
-    # Create a simple database initialization script
-    init_script = f"""
+
+    # Check if database already exists
+    if os.path.exists('instance/quickdesk.db'):
+        print("📋 Existing database found. Running migration...")
+        return run_command(f'{python_command} migrate_database.py', 'Migrating database to latest version')
+    else:
+        print("🗄️  Creating new database with enhanced features...")
+        # Create a comprehensive database initialization script
+        init_script = f"""
 import sys
 sys.path.append('.')
 from app import app, db
+from models import User, Category, Tag, NotificationSettings
+from werkzeug.security import generate_password_hash
+from datetime import datetime
+
 with app.app_context():
+    # Create all tables
     db.create_all()
-    print("Database initialized successfully!")
+    print("✅ Database tables created")
+
+    # Create default admin user
+    admin_user = User.query.filter_by(email='admin@quickdesk.com').first()
+    if not admin_user:
+        admin_user = User(
+            username='admin',
+            email='admin@quickdesk.com',
+            first_name='System',
+            last_name='Administrator',
+            password_hash=generate_password_hash('admin123'),
+            role='admin',
+            is_active=True,
+            email_notifications=True
+        )
+        db.session.add(admin_user)
+        db.session.flush()
+
+        # Create notification settings for admin
+        admin_notifications = NotificationSettings(
+            user_id=admin_user.id,
+            email_on_ticket_created=True,
+            email_on_ticket_updated=True,
+            email_on_comment_added=True,
+            email_on_status_changed=True,
+            email_on_assignment=True
+        )
+        db.session.add(admin_notifications)
+        print("✅ Admin user created: admin@quickdesk.com / admin123")
+
+    # Create default categories
+    default_categories = [
+        {{'name': 'Technical Support', 'description': 'Technical issues and troubleshooting'}},
+        {{'name': 'Bug Report', 'description': 'Software bugs and errors'}},
+        {{'name': 'Feature Request', 'description': 'Requests for new features or improvements'}},
+        {{'name': 'General Inquiry', 'description': 'General questions and information requests'}},
+        {{'name': 'Account Issues', 'description': 'Account access and management problems'}},
+        {{'name': 'Billing', 'description': 'Billing and payment related questions'}}
+    ]
+
+    for cat_data in default_categories:
+        existing_cat = Category.query.filter_by(name=cat_data['name']).first()
+        if not existing_cat:
+            category = Category(**cat_data)
+            db.session.add(category)
+
+    # Create default tags
+    default_tags = [
+        {{'name': 'urgent', 'color': '#ef4444', 'description': 'Urgent issues requiring immediate attention'}},
+        {{'name': 'bug', 'color': '#f59e0b', 'description': 'Software bugs and errors'}},
+        {{'name': 'feature-request', 'color': '#10b981', 'description': 'Requests for new features'}},
+        {{'name': 'question', 'color': '#3b82f6', 'description': 'General questions and inquiries'}},
+        {{'name': 'billing', 'color': '#8b5cf6', 'description': 'Billing and payment related issues'}},
+        {{'name': 'hardware', 'color': '#6b7280', 'description': 'Hardware related problems'}},
+        {{'name': 'software', 'color': '#06b6d4', 'description': 'Software related issues'}},
+        {{'name': 'network', 'color': '#84cc16', 'description': 'Network connectivity issues'}},
+        {{'name': 'security', 'color': '#dc2626', 'description': 'Security related concerns'}},
+        {{'name': 'training', 'color': '#7c3aed', 'description': 'Training and documentation requests'}}
+    ]
+
+    for tag_data in default_tags:
+        existing_tag = Tag.query.filter_by(name=tag_data['name']).first()
+        if not existing_tag:
+            tag = Tag(**tag_data)
+            db.session.add(tag)
+
+    db.session.commit()
+    print("✅ Default categories and tags created")
+    print("✅ Database initialized successfully with enhanced features!")
 """
-    
-    with open('init_db.py', 'w') as f:
-        f.write(init_script)
-    
-    success = run_command(f'{python_command} init_db.py', 'Initializing database')
-    
-    # Clean up
-    if os.path.exists('init_db.py'):
-        os.remove('init_db.py')
-    
-    return success
+
+        with open('init_db.py', 'w') as f:
+            f.write(init_script)
+
+        success = run_command(f'{python_command} init_db.py', 'Initializing enhanced database')
+
+        # Clean up
+        if os.path.exists('init_db.py'):
+            os.remove('init_db.py')
+
+        return success
 
 def create_directories():
     """Create necessary directories"""
@@ -135,21 +214,51 @@ def main():
     if not setup_database():
         sys.exit(1)
     
-    print("\n" + "=" * 50)
-    print("🎉 QuickDesk setup completed successfully!")
-    print("\nNext steps:")
-    print("1. Activate the virtual environment:")
+    print("\n" + "=" * 70)
+    print("🎉 QuickDesk Enhanced Setup Completed Successfully!")
+    print("=" * 70)
+    print("\n📋 NEXT STEPS:")
+    print("\n1. 🔧 Activate the virtual environment:")
     if os.name == 'nt':  # Windows
         print("   venv\\Scripts\\activate")
     else:  # Unix/Linux/macOS
         print("   source venv/bin/activate")
-    print("2. Run the application:")
+
+    print("\n2. ⚙️  Configure your environment (optional but recommended):")
+    print("   • Edit the .env file to configure email settings")
+    print("   • See CONFIGURATION_GUIDE.md for detailed setup instructions")
+
+    print("\n3. 🚀 Run the application:")
     print("   python app.py")
-    print("3. Open your browser and go to: http://localhost:5000")
-    print("\nDefault admin credentials:")
+    print("   or use: python run.py")
+
+    print("\n4. 🌐 Open your browser and go to:")
+    print("   http://localhost:5000")
+
+    print("\n🔑 DEFAULT ADMIN CREDENTIALS:")
     print("   Email: admin@quickdesk.com")
     print("   Password: admin123")
-    print("\nEnjoy using QuickDesk! 🎫")
+    print("   ⚠️  IMPORTANT: Change the default password after first login!")
+
+    print("\n✨ NEW ENHANCED FEATURES AVAILABLE:")
+    print("   🎯 Role-based registration (User, Agent, Admin)")
+    print("   🎨 Modern responsive UI with dark mode")
+    print("   🏷️  Advanced tagging system")
+    print("   📹 Video call integration for support")
+    print("   📊 Comprehensive analytics dashboard")
+    print("   🔔 Enhanced notification system")
+    print("   📱 Progressive Web App (PWA) support")
+    print("   🤖 Auto-assignment and escalation")
+    print("   💬 Real-time collaboration features")
+
+    print("\n📚 DOCUMENTATION:")
+    print("   • README.md - General overview and features")
+    print("   • CONFIGURATION_GUIDE.md - Detailed configuration")
+    print("   • SETUP_GUIDE.md - Step-by-step setup instructions")
+
+    print("\n🎫 Enjoy using QuickDesk Enhanced Edition!")
+    print("   Professional help desk system with enterprise features")
+    print("=" * 70)
 
 if __name__ == '__main__':
     main()

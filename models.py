@@ -6,6 +6,12 @@ from flask_sqlalchemy import SQLAlchemy
 # Initialize db here, will be configured in app.py
 db = SQLAlchemy()
 
+# Association table for many-to-many relationship between tickets and tags
+ticket_tags = db.Table('ticket_tags',
+    db.Column('ticket_id', db.Integer, db.ForeignKey('ticket.id'), primary_key=True),
+    db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), primary_key=True)
+)
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -13,7 +19,16 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), default='user')  # user, agent, admin
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
+    first_name = db.Column(db.String(50))
+    last_name = db.Column(db.String(50))
+    phone = db.Column(db.String(20))
+    department = db.Column(db.String(100))
+    avatar_url = db.Column(db.String(255))
+    last_login = db.Column(db.DateTime)
+    email_notifications = db.Column(db.Boolean, default=True)
+    dark_mode = db.Column(db.Boolean, default=False)
     
     # Relationships
     tickets = db.relationship('Ticket', backref='creator', lazy=True, foreign_keys='Ticket.user_id')
@@ -67,6 +82,7 @@ class Ticket(db.Model):
     comments = db.relationship('Comment', backref='ticket', lazy=True, cascade='all, delete-orphan')
     votes = db.relationship('Vote', backref='ticket', lazy=True, cascade='all, delete-orphan')
     attachments = db.relationship('Attachment', backref='ticket', lazy=True, cascade='all, delete-orphan')
+    tags = db.relationship('Tag', secondary=ticket_tags, lazy='subquery', backref=db.backref('tickets', lazy=True))
     
     @property
     def vote_score(self):
@@ -119,3 +135,62 @@ class Attachment(db.Model):
     
     def __repr__(self):
         return f'<Attachment {self.original_filename}>'
+
+class Tag(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    color = db.Column(db.String(7), default='#007bff')  # Hex color code
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True)
+
+    def __repr__(self):
+        return f'<Tag {self.name}>'
+
+class TicketEscalation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'), nullable=False)
+    escalated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    escalated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    escalation_reason = db.Column(db.String(255))
+    resolved_at = db.Column(db.DateTime)
+
+    # Relationships
+    ticket = db.relationship('Ticket', backref='escalations')
+    escalator = db.relationship('User', backref='escalations_created')
+
+    def __repr__(self):
+        return f'<TicketEscalation {self.id}>'
+
+class NotificationSettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    email_on_ticket_created = db.Column(db.Boolean, default=True)
+    email_on_ticket_updated = db.Column(db.Boolean, default=True)
+    email_on_comment_added = db.Column(db.Boolean, default=True)
+    email_on_status_changed = db.Column(db.Boolean, default=True)
+    email_on_assignment = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = db.relationship('User', backref=db.backref('notification_settings', uselist=False))
+
+    def __repr__(self):
+        return f'<NotificationSettings {self.user_id}>'
+
+class TicketActivity(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(db.Integer, db.ForeignKey('ticket.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    activity_type = db.Column(db.String(50), nullable=False)  # created, updated, commented, assigned, etc.
+    description = db.Column(db.Text)
+    old_value = db.Column(db.Text)
+    new_value = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    ticket = db.relationship('Ticket', backref='activities')
+    user = db.relationship('User', backref='activities')
+
+    def __repr__(self):
+        return f'<TicketActivity {self.activity_type}>'
