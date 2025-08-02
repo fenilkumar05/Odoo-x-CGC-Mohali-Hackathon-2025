@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - QuickDesk{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-cog me-2"></i>Admin Dashboard</h2>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.total_users }}</h4>
+                        <p class="mb-0">Total Users</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.total_tickets }}</h4>
+                        <p class="mb-0">Total Tickets</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-ticket-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.total_categories }}</h4>
+                        <p class="mb-0">Categories</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-tags fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.open_tickets }}</h4>
+                        <p class="mb-0">Open Tickets</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-folder-open fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ticket Status Overview -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie me-2"></i>Ticket Status Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <h4 class="text-primary">{{ stats.open_tickets }}</h4>
+                        <small class="text-muted">Open</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <h4 class="text-warning">{{ stats.in_progress_tickets }}</h4>
+                        <small class="text-muted">In Progress</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">{{ stats.resolved_tickets }}</h4>
+                        <small class="text-muted">Resolved</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-secondary">{{ stats.closed_tickets }}</h4>
+                        <small class="text-muted">Closed</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-tools me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin.create_user') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus me-2"></i>Create User
+                    </a>
+                    <a href="{{ url_for('admin.create_category') }}" class="btn btn-outline-success">
+                        <i class="fas fa-tag me-2"></i>Create Category
+                    </a>
+                    <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-info">
+                        <i class="fas fa-users-cog me-2"></i>Manage Users
+                    </a>
+                    <a href="{{ url_for('admin.manage_categories') }}" class="btn btn-outline-warning">
+                        <i class="fas fa-tags me-2"></i>Manage Categories
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-clock me-2"></i>Recent Tickets</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_tickets %}
+                <div class="list-group list-group-flush">
+                    {% for ticket in recent_tickets %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">
+                                    <a href="{{ url_for('tickets.view_ticket', id=ticket.id) }}" class="text-decoration-none">
+                                        #{{ ticket.id }} - {{ ticket.subject[:40] }}{% if ticket.subject|length > 40 %}...{% endif %}
+                                    </a>
+                                </h6>
+                                <p class="mb-1 text-muted small">{{ ticket.creator.username }}</p>
+                            </div>
+                            <small class="text-muted">{{ ticket.created_at.strftime('%m/%d %H:%M') }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No recent tickets</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-user-clock me-2"></i>Recent Users</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_users %}
+                <div class="list-group list-group-flush">
+                    {% for user in recent_users %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ user.username }}</h6>
+                                <p class="mb-1 text-muted small">{{ user.email }}</p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge 
+                                    {% if user.role == 'admin' %}bg-danger
+                                    {% elif user.role == 'agent' %}bg-warning
+                                    {% else %}bg-primary{% endif %}">
+                                    {{ user.role.title() }}
+                                </span>
+                                <br>
+                                <small class="text-muted">{{ user.created_at.strftime('%m/%d %H:%M') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No recent users</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

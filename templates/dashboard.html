@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - QuickDesk{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+    <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>New Ticket
+    </a>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    {% if current_user.is_agent() %}
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.total_tickets }}</h4>
+                        <p class="mb-0">Total Tickets</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-ticket-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.open_tickets }}</h4>
+                        <p class="mb-0">Open Tickets</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-folder-open fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.my_assigned }}</h4>
+                        <p class="mb-0">Assigned to Me</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-check fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-md-4 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.my_tickets }}</h4>
+                        <p class="mb-0">My Tickets</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-ticket-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4>{{ stats.open_tickets }}</h4>
+                        <p class="mb-0">Open Tickets</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-folder-open fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Search</label>
+                <input type="text" class="form-control" name="search" value="{{ current_filters.search }}" placeholder="Search tickets...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Status</label>
+                <select class="form-select" name="status">
+                    <option value="all" {% if current_filters.status == 'all' %}selected{% endif %}>All</option>
+                    <option value="open" {% if current_filters.status == 'open' %}selected{% endif %}>Open</option>
+                    <option value="in_progress" {% if current_filters.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="resolved" {% if current_filters.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                    <option value="closed" {% if current_filters.status == 'closed' %}selected{% endif %}>Closed</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Category</label>
+                <select class="form-select" name="category">
+                    <option value="all">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if current_filters.category == category.id|string %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Sort By</label>
+                <select class="form-select" name="sort">
+                    <option value="recent" {% if current_filters.sort == 'recent' %}selected{% endif %}>Most Recent</option>
+                    <option value="oldest" {% if current_filters.sort == 'oldest' %}selected{% endif %}>Oldest</option>
+                    <option value="most_replied" {% if current_filters.sort == 'most_replied' %}selected{% endif %}>Most Replied</option>
+                    <option value="votes" {% if current_filters.sort == 'votes' %}selected{% endif %}>Most Voted</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-search me-1"></i>Filter
+                </button>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tickets List -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>Tickets
+            <span class="badge bg-secondary ms-2">{{ tickets.total }}</span>
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if tickets.items %}
+        <div class="row">
+            {% for ticket in tickets.items %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card ticket-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="card-title mb-0">
+                                <a href="{{ url_for('tickets.view_ticket', id=ticket.id) }}" class="text-decoration-none">
+                                    #{{ ticket.id }} - {{ ticket.subject[:30] }}{% if ticket.subject|length > 30 %}...{% endif %}
+                                </a>
+                            </h6>
+                            <div class="vote-buttons ms-2">
+                                <span class="badge bg-secondary">{{ ticket.vote_score }}</span>
+                            </div>
+                        </div>
+                        
+                        <p class="card-text text-muted small">
+                            {{ ticket.description[:100] }}{% if ticket.description|length > 100 %}...{% endif %}
+                        </p>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge 
+                                    {% if ticket.status == 'open' %}bg-primary
+                                    {% elif ticket.status == 'in_progress' %}bg-warning
+                                    {% elif ticket.status == 'resolved' %}bg-success
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ ticket.status.replace('_', ' ').title() }}
+                                </span>
+                                <span class="badge 
+                                    {% if ticket.priority == 'low' %}bg-success
+                                    {% elif ticket.priority == 'medium' %}bg-info
+                                    {% elif ticket.priority == 'high' %}bg-warning
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ ticket.priority.title() }}
+                                </span>
+                            </div>
+                            <small class="text-muted">
+                                {{ ticket.updated_at.strftime('%m/%d %H:%M') }}
+                            </small>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-user me-1"></i>{{ ticket.creator.username }}
+                                <i class="fas fa-tag ms-2 me-1"></i>{{ ticket.category.name }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if tickets.pages > 1 %}
+        <nav aria-label="Tickets pagination">
+            <ul class="pagination justify-content-center">
+                {% if tickets.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.dashboard', page=tickets.prev_num, **request.args) }}">Previous</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in tickets.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != tickets.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('main.dashboard', page=page_num, **request.args) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if tickets.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.dashboard', page=tickets.next_num, **request.args) }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No tickets found</h5>
+            <p class="text-muted">Try adjusting your filters or create a new ticket.</p>
+            <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Create Ticket
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

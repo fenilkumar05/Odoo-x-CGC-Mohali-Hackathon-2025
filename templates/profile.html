@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - QuickDesk{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-user me-2"></i>User Profile</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Personal Information</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Username:</strong></td>
+                                <td>{{ current_user.username }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td>{{ current_user.email }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Role:</strong></td>
+                                <td>
+                                    <span class="badge 
+                                        {% if current_user.role == 'admin' %}bg-danger
+                                        {% elif current_user.role == 'agent' %}bg-warning
+                                        {% else %}bg-primary{% endif %}">
+                                        {{ current_user.role.title() }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Member Since:</strong></td>
+                                <td>{{ current_user.created_at.strftime('%B %d, %Y') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6>Account Statistics</h6>
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body">
+                                        <h4>{{ current_user.tickets|length }}</h4>
+                                        <small>Tickets Created</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body">
+                                        <h4>{{ current_user.comments|length }}</h4>
+                                        <small>Comments Posted</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body">
+                                        <h4>{{ current_user.votes|length }}</h4>
+                                        <small>Votes Cast</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if current_user.is_agent() %}
+                            <div class="col-6">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body">
+                                        <h4>{{ current_user.assigned_tickets|length }}</h4>
+                                        <small>Assigned Tickets</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5><i class="fas fa-clock me-2"></i>Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                {% if current_user.tickets %}
+                <h6>Recent Tickets</h6>
+                <div class="list-group list-group-flush mb-4">
+                    {% for ticket in current_user.tickets[:5] %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">
+                                    <a href="{{ url_for('tickets.view_ticket', id=ticket.id) }}" class="text-decoration-none">
+                                        #{{ ticket.id }} - {{ ticket.subject[:50] }}{% if ticket.subject|length > 50 %}...{% endif %}
+                                    </a>
+                                </h6>
+                                <p class="mb-1 text-muted small">{{ ticket.category.name }}</p>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge 
+                                    {% if ticket.status == 'open' %}bg-primary
+                                    {% elif ticket.status == 'in_progress' %}bg-warning
+                                    {% elif ticket.status == 'resolved' %}bg-success
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ ticket.status.replace('_', ' ').title() }}
+                                </span>
+                                <br>
+                                <small class="text-muted">{{ ticket.created_at.strftime('%m/%d %H:%M') }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if current_user.comments %}
+                <h6>Recent Comments</h6>
+                <div class="list-group list-group-flush">
+                    {% for comment in current_user.comments[:5] %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">
+                                    <a href="{{ url_for('tickets.view_ticket', id=comment.ticket.id) }}" class="text-decoration-none">
+                                        Comment on #{{ comment.ticket.id }} - {{ comment.ticket.subject[:30] }}{% if comment.ticket.subject|length > 30 %}...{% endif %}
+                                    </a>
+                                </h6>
+                                <p class="mb-1 text-muted small">{{ comment.content[:100] }}{% if comment.content|length > 100 %}...{% endif %}</p>
+                            </div>
+                            <small class="text-muted">{{ comment.created_at.strftime('%m/%d %H:%M') }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if not current_user.tickets and not current_user.comments %}
+                <div class="text-center py-4">
+                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No recent activity</h5>
+                    <p class="text-muted">Start by creating your first ticket!</p>
+                    <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create Ticket
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-cog me-2"></i>Account Settings</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" disabled>
+                        <i class="fas fa-edit me-2"></i>Edit Profile
+                    </button>
+                    <button class="btn btn-outline-secondary" disabled>
+                        <i class="fas fa-key me-2"></i>Change Password
+                    </button>
+                    <button class="btn btn-outline-info" disabled>
+                        <i class="fas fa-bell me-2"></i>Notification Settings
+                    </button>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Profile editing features coming soon!
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        {% if current_user.role == 'user' %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6><i class="fas fa-question-circle me-2"></i>Need Help?</h6>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Having trouble with the system? Our support team is here to help!</p>
+                <a href="{{ url_for('tickets.create_ticket') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-headset me-2"></i>Contact Support
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to QuickDesk{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="text-center mb-5">
+            <h1 class="display-4 mb-4">
+                <i class="fas fa-headset text-primary"></i>
+                Welcome to QuickDesk
+            </h1>
+            <p class="lead">Your simple and efficient help desk solution</p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-ticket-alt fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Create Tickets</h5>
+                        <p class="card-text">Submit support requests and track their progress from creation to resolution.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-users fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Collaborate</h5>
+                        <p class="card-text">Work together with support agents through comments and updates.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-search fa-3x text-info mb-3"></i>
+                        <h5 class="card-title">Search & Filter</h5>
+                        <p class="card-text">Easily find tickets with powerful search and filtering options.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-bell fa-3x text-warning mb-3"></i>
+                        <h5 class="card-title">Notifications</h5>
+                        <p class="card-text">Stay updated with email notifications for ticket status changes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <h3 class="mb-4">Get Started</h3>
+            <div class="d-grid gap-2 d-md-block">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg me-3">
+                    <i class="fas fa-user-plus me-2"></i>Register
+                </a>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </a>
+            </div>
+        </div>
+
+        <div class="mt-5 p-4 bg-light rounded">
+            <h4 class="mb-3">Features</h4>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i>User-friendly ticket creation</li>
+                        <li><i class="fas fa-check text-success me-2"></i>File attachments support</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Ticket categorization</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Priority levels</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i>Voting system</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Email notifications</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Admin management tools</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Agent assignment</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
